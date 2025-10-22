@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Google Play Redeem Spinner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+:root{--primary:#ff6b35;--secondary:#f7931e;--accent:#ffd23f;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#1a1d29 0%,#2d3142 50%,#1a1d29 100%);color:#fff;font-family:'Poppins',sans-serif;padding:15px;}
+
+.container{max-width:450px;width:100%;background:rgba(255,255,255,0.03);padding:30px 20px;border-radius:24px;box-shadow:0 25px 80px rgba(0,0,0,0.4);backdrop-filter:blur(15px);border:1px solid rgba(255,255,255,0.08);position:relative;overflow:hidden;}
+.container::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(255,107,53,0.1) 0%,transparent 70%);animation:glow 8s ease-in-out infinite;}
+
+@keyframes glow{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(10px,10px) scale(1.1);}}
+
+.header{text-align:center;margin-bottom:40px;position:relative;z-index:2;}
+.header h1{font-size:24px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;gap:8px;}
+.header h1::before{content:'🎁';font-size:28px;}
+
+.wheel-wrap{position:relative;width:300px;height:300px;margin:0 auto 25px;display:flex;align-items:center;justify-content:center;}
+
+.wheel-border{position:absolute;width:100%;height:100%;border-radius:50%;background:linear-gradient(145deg,#ff6b35,#d45628);box-shadow:0 15px 50px rgba(255,107,53,0.4),inset 0 -5px 15px rgba(0,0,0,0.3),inset 0 5px 15px rgba(255,255,255,0.1);padding:12px;}
+
+
+.wheel-center{position:absolute;width:252px;height:252px;top:24px;left:24px;border-radius:50%;box-shadow:0 8px 25px rgba(0,0,0,0.3),inset 0 3px 10px rgba(0,0,0,0.2);}
+
+canvas{border-radius:50%;}
+
+.center-circle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:35px;height:35px;background:linear-gradient(145deg,#ff6b35,#d45628);border-radius:50%;border:4px solid #fff5e6;box-shadow:0 4px 15px rgba(0,0,0,0.5);z-index:10;}
+
+.pointer{position:absolute;top:-35px;left:50%;transform:translateX(-50%);z-index:5;filter:drop-shadow(0 4px 10px rgba(0,0,0,0.4));}
+.pointer-arrow{width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:32px solid #ff6b35;}
+.pointer-dot{position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#fff5e6;border-radius:50%;border:3px solid #ff6b35;box-shadow:0 2px 8px rgba(0,0,0,0.3);}
+
+.controls{text-align:center;position:relative;z-index:2;}
+
+.spin-btn{background:linear-gradient(135deg,#ffd23f 0%,#f7931e 100%);border:none;padding:16px 40px;border-radius:50px;font-weight:700;color:#1a1d29;font-size:18px;cursor:pointer;box-shadow:0 8px 25px rgba(255,210,63,0.4);transition:all 0.3s ease;text-transform:uppercase;letter-spacing:1px;position:relative;overflow:hidden;min-height:50px;width:100%;max-width:300px;}
+.spin-btn::before{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,0.3);transform:translate(-50%,-50%);transition:width 0.6s,height 0.6s;}
+.spin-btn:hover:not(:disabled)::before{width:300px;height:300px;}
+.spin-btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 12px 35px rgba(255,210,63,0.5);}
+.spin-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+.spin-btn span{position:relative;z-index:1;}
+
+.status{margin:15px 0;min-height:24px;font-weight:600;font-size:14px;color:#ffd23f;}
+
+.timer-section{background:rgba(255,107,53,0.15);padding:14px 24px;border-radius:16px;margin:20px auto;display:inline-block;border:2px solid rgba(255,107,53,0.3);backdrop-filter:blur(10px);}
+.timer-section h3{margin:0 0 6px;font-size:12px;color:#bbb;font-weight:600;text-transform:uppercase;letter-spacing:1px;}
+.timer-value{font-size:28px;font-weight:700;color:#ffd23f;font-family:'Courier New',monospace;text-shadow:0 2px 10px rgba(255,210,63,0.3);}
+
+.code-display{background:linear-gradient(135deg,rgba(255,210,63,0.15),rgba(247,147,30,0.15));padding:16px;border:2px dashed rgba(255,210,63,0.5);margin:20px 0;border-radius:16px;font-size:20px;font-weight:700;color:#ffd23f;letter-spacing:3px;font-family:'Courier New',monospace;text-shadow:0 2px 8px rgba(255,210,63,0.2);min-height:60px;display:flex;align-items:center;justify-content:center;word-break:break-all;}
+
+.reveal-btn{background:linear-gradient(135deg,#4ecdc4 0%,#44a08d 100%);border:none;padding:14px 40px;border-radius:50px;font-weight:700;color:#fff;font-size:16px;cursor:pointer;box-shadow:0 6px 20px rgba(78,205,196,0.3);transition:all 0.3s ease;text-transform:uppercase;letter-spacing:1px;margin-top:8px;min-height:46px;width:100%;max-width:300px;}
+.reveal-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(78,205,196,0.4);}
+.reveal-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
+
+.notice{font-size:12px;color:#888;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.notice::before{content:'⚠️';font-size:14px;}
+
+@media(max-width:480px){
+.container{padding:25px 15px;}
+.header h1{font-size:20px;}
+.wheel-wrap{width:260px;height:260px;}
+.wheel-border{padding:10px;}
+.dots-container{width:240px;height:240px;top:10px;left:10px;}
+.wheel-center{width:220px;height:220px;top:20px;left:20px;}
+.center-circle{width:30px;height:30px;border-width:3px;}
+canvas{width:220px;height:220px;}
+.spin-btn{padding:14px 30px;font-size:16px;}
+.timer-value{font-size:24px;}
+.code-display{font-size:16px;letter-spacing:2px;padding:12px;}
+.reveal-btn{padding:12px 30px;font-size:14px;}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>Google Play Redeem Spin</h1>
+</div>
+
+<div class="wheel-wrap">
+<div class="wheel-border">
+<div class="dots-container" id="dotsContainer"></div>
+</div>
+<div class="wheel-center">
+<canvas id="wheelCanvas" width="252" height="252"></canvas>
+</div>
+<div class="center-circle"></div>
+<div class="pointer">
+<div class="pointer-arrow"></div>
+<div class="pointer-dot"></div>
+</div>
+</div>
+
+<div class="controls">
+<button class="spin-btn" id="spinBtn"><span>SPIN THE WHEEL</span></button>
+<div class="status" id="status"></div>
+
+<div class="timer-section">
+<h3>Time Remaining</h3>
+<div class="timer-value" id="timer">05:00</div>
+</div>
+
+<div class="code-display" id="codeDisplay">— — — —</div>
+<button class="reveal-btn" id="revealBtn" disabled>REVEAL CODE</button>
+
+<p class="notice">You can claim only once per browser</p>
+</div>
+</div>
+
+<script>
+const FIXED_CODE = "ABCD-EF12-GH34-E46G";
+const STORAGE_KEY = "spinner_played_v6";
+
+// Use in-memory storage that mimics localStorage API
+const memoryStorage = {
+  data: {},
+  getItem(key) { return this.data[key] || null; },
+  setItem(key, value) { this.data[key] = value; }
+};
+
+let played = memoryStorage.getItem(STORAGE_KEY) === '1';
+
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+const slices = ["₹10","₹15","₹10","₹20","₹10","₹15","₹10","₹30"];
+const colors = ['#fff5e6','#ffe4b3','#ffd699','#ffc266','#ffb84d','#ffa31a','#ff9500','#ff8c00'];
+
+let rotation = 0;
+let spinning = false;
+let ready = false;
+let remainingTime = 300;
+let timerInterval = null;
+
+const statusEl = document.getElementById('status');
+const spinBtn = document.getElementById('spinBtn');
+const revealBtn = document.getElementById('revealBtn');
+const timerEl = document.getElementById('timer');
+const codeDisplay = document.getElementById('codeDisplay');
+
+// Create decorative dots
+const dotsContainer = document.getElementById('dotsContainer');
+for(let i=0; i<16; i++){
+  const dot = document.createElement('div');
+  dot.className = 'dot';
+  const angle = (i/16)*2*Math.PI - Math.PI/2;
+  const radius = 123;
+  const x = 138 + radius * Math.cos(angle) - 7.5;
+  const y = 138 + radius * Math.sin(angle) - 7.5;
+  dot.style.left = x + 'px';
+  dot.style.top = y + 'px';
+  dotsContainer.appendChild(dot);
+}
+
+function drawWheel(rot=0){
+  ctx.clearRect(0,0,252,252);
+  const cx=126, cy=126, radius=118, n=slices.length;
+
+  for(let i=0; i<n; i++){
+    const startAngle = (i/n)*2*Math.PI + rot - Math.PI/2;
+    const endAngle = ((i+1)/n)*2*Math.PI + rot - Math.PI/2;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((startAngle + endAngle) / 2);
+    ctx.fillStyle = '#1a1d29';
+    ctx.font = '700 16px Poppins';
+    ctx.textAlign = 'center';
+    ctx.fillText(slices[i], radius - 30, 5);
+    ctx.restore();
+  }
+}
+
+drawWheel();
+
+function spin(){
+  if(played || spinning) return;
+
+  spinning = true;
+  spinBtn.disabled = true;
+  statusEl.textContent = "🎰 Spinning...";
+
+  // Rigged to always land on ₹10 (indices 0, 2, 4, 6)
+  const targetIndex = [0, 2, 4, 6][Math.floor(Math.random() * 4)];
+  const extraSpins = 5 + Math.random() * 2;
+  const sliceAngle = (2 * Math.PI) / slices.length;
+  const targetRotation = -(targetIndex * sliceAngle) + (extraSpins * 2 * Math.PI);
+
+  const startTime = performance.now();
+  const duration = 5000;
+
+  function animate(currentTime){
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(1, elapsed / duration);
+    const easing = 1 - Math.pow(1 - progress, 4);
+
+    rotation = easing * targetRotation;
+    drawWheel(rotation);
+
+    if(progress < 1){
+      requestAnimationFrame(animate);
+    } else {
+      spinning = false;
+      statusEl.textContent = "⏳ Wait for the timer to complete...";
+      startTimer();
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+spinBtn.onclick = spin;
+
+function startTimer(){
+  remainingTime = 300;
+  ready = false;
+  revealBtn.disabled = true;
+
+  timerInterval = setInterval(() => {
+    remainingTime--;
+    const minutes = Math.floor(remainingTime / 60);
+    const seconds = remainingTime % 60;
+    timerEl.textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+
+    if(remainingTime <= 0){
+      clearInterval(timerInterval);
+      ready = true;
+      revealBtn.disabled = false;
+      statusEl.textContent = "✨ Ready! Click reveal to get your code";
+    }
+  }, 1000);
+}
+
+revealBtn.onclick = () => {
+  if(!ready) return;
+
+  codeDisplay.textContent = FIXED_CODE;
+  memoryStorage.setItem(STORAGE_KEY, '1');
+  played = true;
+  revealBtn.disabled = true;
+  spinBtn.disabled = true;
+  statusEl.textContent = "✅ Code claimed successfully!";
+};
+
+if(played){
+  statusEl.textContent = "✅ Already claimed — Try again later";
+  spinBtn.disabled = true;
+  revealBtn.disabled = true;
+  timerEl.textContent = "00:00";
+  codeDisplay.textContent = FIXED_CODE;
+}
+</script>
+</body>
+</html>
